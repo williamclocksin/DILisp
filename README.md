@@ -122,12 +122,11 @@ Subsequent references to an object initially tagged with an `@id` are marked wit
 The simplest example of a cyclic object graph is where a child object has a *back pointer* to a parent object.  An example may be depicted as follows, where each object is a map of name-value pairs:
 
 <style>
-      .img-container {
-        text-align: center;
-      }
+.img-container {text-align: center;}
 </style>
+
 <div class="img-container"> 
-      <img src="diLisp-art.pdf" width="50%">
+<img src="diLisp-art.pdf" width="50%">
 </div>
 
 In the following code, ```(@id g0)``` identifies the parent object, and ```(@id g1)``` identifies the child object.
