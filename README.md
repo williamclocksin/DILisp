@@ -2,15 +2,17 @@
 W F Clocksin, July 2024  (william.clocksin@cantab.net)
 
 
-##Introduction
+## Introduction
 This note describes a minimal dialect of Lisp, called DILisp[^1], that is used as a data interchange language similar to JSON.  DILisp code can be more compact than JSON, and is easier to parse and generate. A parser, generator and evaluator for DILisp are implemented in Java. The DILisp syntax has several features, implemented as what Lisp calls *special forms*, to facilitate the efficient serialisation of cyclic object graphs in Java programs.
 
 The DILisp *parser* reads a sequence of characters (from a Java string or file) and returns a DILisp expression.  The DILisp *evaluator* takes a DILisp expression and returns a Java object. The DILisp *generator* takes a Java object and returns a human-readable Java String being a sequence of characters which, if parsed, would return an equal but distinct Java object. The generator can produce strings in both a compressed format and in a 'pretty' format with indentations for improved readability.
 
-##Syntax
+## Syntax
+
 DILisp code is built up from two basic elements: *atoms* and *lists*.  Atoms are used to represents names and values.  Lists are used to represent arbitrarily complex data structures.
 
-###Atoms
+### Atoms
+
 An atom is a sequence of contiguous characters, or a sequence of any characters enclosed in double quote marks. There are two kinds of atoms: *Symbols* and *numbers*.  Numbers can be integers or floating point numbers.  Here are some examples of atoms:
 
 ```
@@ -23,7 +25,8 @@ a123
 "With a \n and a \u23F0"
 ```
 
-###Symbols
+### Symbols
+
 Symbols are used to represent names and values. The characters in an unquoted symbol must begin with a non-digit and cannot contain a whitespace character or a parenthesis.  Unlike JSON, there is no need to quote symbols unless the symbol contains non-symbol or special characters. For example, `sequence` is a symbol, and `"sequence"` is an identical symbol that has been unnecessarily quoted.  Both evaluate to an instance of Java `String`.  The characters `a1234` represent a symbol, but while `1234` is a number (evaluating to a Java `Integer`), the characters `"1234"` are a symbol that evaluates to a Java `String`.
 
 Symbols that look like numbers but are really symbols are useful in several domains such as guitar chord notation, where `"320001"` is a DILisp symbol representing a G7 chord. This is important because if the guitar E chord notated `022100` were not quoted, it would be evaluated to the number 22,100 instead of the symbol `022100`.  Symbols may contain the usual Java string escape symbols using the backslash notation.
@@ -54,7 +57,8 @@ A list is a sequence of atoms or other lists enclosed in parentheses.  Here are 
 ```
 The third example shows use of the `map` and `list` special forms, described below. The map of name/value pairs describes the ukulele, a stringed musical instrument, and the list of symbols describes the pitch of the ukulele's strings.  The details are not important, but the example shows how the file name can contain a dot without the need for quoting the name, and also how whitespace may be used to clarify the structure.
 
-##Special Forms
+## Special Forms
+
 Lisp has the idea of a *special form*, which is a Lisp expression that is evaluated in a way meaningful to a particular purpose.  DILisp defines four special forms. Two of these, `map` and `list`, are defined to represent the two data structures analogous to the JSON object and array. When these special forms are evaluated by the DILisp evaluator, corresponding Java objects are returned.
 
 The two other special forms, `@id` and `@ref`, are used to notate cyclic object graphs. When a data interchange language is used to represent a cyclic object graph, it is necessary to have a syntax for representing an *identifier* (a unique identifier of a given data structure), and a *reference* to an identifier.  Some -- but not all -- implementations of JSON allow for the representation of cyclic object graphs, but in the cases where DILisp was designed, it is considered essential to represent cyclic object graphs. The DILisp parser and generator parse and generate `@id` and `@ref` forms where necessary. There is no need for the user to know about `@id` and `@ref`, but `@id` and `@ref` may be seen in generated DILisp code.  The DILisp Archiver (serialiser and deserialiser) resolves references when the cyclic object graph is created.
@@ -117,7 +121,7 @@ A reference is a list of two atoms: The symbol `@ref` and an integer value, as s
 ```
 Subsequent references to an object initially tagged with an `@id` are marked with `@ref` and the same identifier number. This approach greatly reduces the size of DILisp expressions because the object is serialised only once, and subsequent references to the object are handled through `@ref`. The DILisp generator emits these references into the generated expression automatically, and the DILisp Archiver causes the references to be resolved automatically. Simply calling eval does not resolve references, but it just returns the map that associates the reference with the identifier number.
 
-###Example of @id and @ref
+### Example of @id and @ref
 
 The simplest example of a cyclic object graph is where a child object has a *back pointer* to a parent object.  An example may be depicted as follows, where each object is a map of name-value pairs:
 
@@ -144,7 +148,7 @@ In this example, where the child object is coded as nested within the parent obj
 
 It is important to remember that the user does not need to know about ```@id``` and ```@ref```.  These special forms are emitted automatically by the generator when a cyclic object graph is archived, and are processed when an archived object is parsed.
 
-##Internal Representation
+## Internal Representation
 The internal representation of a DILisp expression corresponds exactly to a Lisp expression, with list cells composed of `car` and `cdr` components.  DILisp defines the Java object `Cell` as follows:
 
 ```java
@@ -161,7 +165,7 @@ Symbols are represented by Java Strings, and Numbers are represented by Java Int
 
 Type dispatch using Java `instanceof` is needed internally to distinguish between the types of objects that have been evaluated. Using `instanceof` is an acceptable technique in the context here of low-level metaprogramming because Java does not support a storage-sharing union type system.
 
-##Java API
+## Java API
 
 There is a Java API for accessing the DILisp parser, evaluator, and generator.
 
